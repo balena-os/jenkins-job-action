@@ -1,6 +1,7 @@
 from jenkins_helper.jenkins_functions import *
 import sys
 import re
+import os
 
 
 DOMAIN_REGEX = "^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n?]+)"
