@@ -13,6 +13,10 @@ inputs:
   jenkins_params:
     description: 'Jenkins build parameters to use in job'
     required: false
+  jenkins_use_post_request:
+    description: 'Use post requests instead of get to trigger Jenkins jobs'
+    required: false
+    default: None
   console_log_regex:
     description: 'Base64 encoded jenkins console log regex to filter out unecessary output text. This regex search runs using re.DOTALL'
     required: false

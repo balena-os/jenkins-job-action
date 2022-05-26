@@ -31,6 +31,7 @@ def get_request_response(url, jenkins_user, jenkins_token, parse_json=True,
                                                 else request_response_object
         return request_response
     else:
+        print(f"Request failed with {status_code}")
         return None
 
 
@@ -42,15 +43,50 @@ def get_crumb(jenkins_url, jenkins_user, jenkins_token):
     return crumb_data['crumb']
 
 
-def queue_job(crumb, jenkins_url, job_name, jenkins_params, jenkins_user, jenkins_token):
-    query_string =  ''
-    if jenkins_params:
-        params = json.loads(jenkins_params)
-        query_string = '?' + '&'.join([str(param)+"="+str(params[param]) for param in params])
-    job_queue_url = f"{jenkins_url}/job/{job_name}/buildWithParameters{query_string}"
-    queue_response = get_request_response(job_queue_url, jenkins_user, jenkins_token, parse_json=False, params={ 'token': jenkins_token }, headers={'Jenkins-Crumb': crumb})
-    queue_item_location = queue_response.headers["Location"]
-    return queue_item_location
+def post_request_response(crumb, jenkins_url, job_name, jenkins_params,
+                          jenkins_user, jenkins_token, parse_json=False):
+    url = "%s/job/%s/buildWithParameters" % (jenkins_url, job_name)
+    headers = {'Jenkins-Crumb': crumb}
+    json_params = json.loads(jenkins_params)
+    request_response_object = requests.post(url,
+                                            auth=(jenkins_user, jenkins_token),
+                                            headers=headers, data=json_params)
+    status_code = request_response_object.status_code
+    if status_code >= 200 and status_code < 300:
+        request_response = request_response_object.json() if parse_json \
+                                                else request_response_object
+        return request_response
+    else:
+        print(f"Request failed with {status_code}")
+        return None
+
+
+def queue_job(crumb, jenkins_url, job_name, jenkins_params, jenkins_user,
+              jenkins_token, jenkins_use_post_request=None):
+    queue_response = None
+    if jenkins_use_post_request:
+        queue_response = post_request_response(crumb, jenkins_url,
+                                               job_name, jenkins_params,
+                                               jenkins_user, jenkins_token)
+    else:
+        query_string = ''
+        if jenkins_params:
+            params = json.loads(jenkins_params)
+            query_string = '?' + '&'.join(
+                [str(param)+"="+str(params[param]) for param in params])
+        job_queue_url = \
+            f"{jenkins_url}/job/{job_name}/buildWithParameters{query_string}"
+        queue_response = get_request_response(
+            job_queue_url, jenkins_user, jenkins_token,
+            parse_json=False, params={'token': jenkins_token},
+            headers={'Jenkins-Crumb': crumb})
+    if queue_response is not None and queue_response.headers is not None:
+        queue_item_location = queue_response.headers["Location"]
+        return queue_item_location
+    else:
+        print(f"Error queuing job: url {jenkins_url} job {job_name}"
+              "params {jenkins_params} user ${jenkins_user}")
+        return None
 
 
 def get_job_run_url(queue_item_location, jenkins_user, jenkins_token,
