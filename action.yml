@@ -28,6 +28,10 @@ inputs:
     description: 'Jenkins timeout period for called functions. Default to 150 seconds'
     required: false
     default: '150'
+  do_not_wait:
+    description: 'Do not wait for jobs to complete'
+    required: false
+    default: None
 runs:
   using: 'docker'
   image: 'Dockerfile'
